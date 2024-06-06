@@ -33,7 +33,7 @@ module.exports = {
       interaction.options as CommandInteractionOptionResolver;
     const subCommand = interactionOptions.getSubcommand();
 
-    interaction.deferReply()
+    await interaction.deferReply()
 
     if (subCommand == "add") {
       if (interactionOptions.getUser("target")) {
@@ -61,7 +61,7 @@ module.exports = {
             "https://discord.com/assets/ac6f8cf36394c66e7651.png"
         );
         embed.setTimestamp(new Date());
-        await interaction.reply({ embeds: [embed] });
+        await interaction.editReply({ embeds: [embed] });
       }
     } else if (subCommand == "list") {
       const blacklistFile = fs.readFileSync("src/config/blacklist.json");
@@ -81,7 +81,7 @@ module.exports = {
       embed.setDescription("ブラックリストのユーザーを表示します。")
       embed.addFields({name: "ユーザー", value: blacklistUsers})
       embed.setTimestamp(new Date());
-      await interaction.reply({ embeds: [embed] });
+      await interaction.editReply({ embeds: [embed] });
 
     }
   },
