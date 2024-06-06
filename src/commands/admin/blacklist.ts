@@ -33,6 +33,8 @@ module.exports = {
       interaction.options as CommandInteractionOptionResolver;
     const subCommand = interactionOptions.getSubcommand();
 
+    interaction.deferReply()
+
     if (subCommand == "add") {
       if (interactionOptions.getUser("target")) {
         let targetUser = (
