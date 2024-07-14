@@ -10,10 +10,27 @@ import { token, CanaryToken } from "./config/config.json";
 import { RaiClient } from "./raicord";
 import fs, { readFileSync } from "fs";
 import path from "path";
+import { djskClient } from "@uplc/discord.jsk";
 
 const canaryMode = false;
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds] }) as RaiClient;
+const production = true;
+
+const client = new djskClient(
+  {
+    intents: [
+      GatewayIntentBits.Guilds,
+      GatewayIntentBits.MessageContent,
+      GatewayIntentBits.GuildMessages,
+      GatewayIntentBits.GuildMessageReactions,
+    ],
+  },
+  {
+    encoding: "Shift_JIS",
+    useableUserId: ["1076090244069343294"],
+    prefix: production ? ".jsk" : ".dev_jsk",
+  }
+) as RaiClient;
 
 client.once(Events.ClientReady, (baseClient) => {
   const client = baseClient as RaiClient;
@@ -23,16 +40,19 @@ client.once(Events.ClientReady, (baseClient) => {
   }
   console.log(`Ready! Logged as ${client.user.username}`);
 
+  // jsk = new djsk(client, {"encoding": "Shift_JIS", useableUserId: ["1076090244069343294"]})
+  // client.loadDjsk({});
+
   setInterval(() => {
     if (!client.user) return;
 
-    const activities = ["こんにちは👋", "TypeScriptで作成", "v0.0.1-beta"];
+    const activities = ["こんにちは👋", "TypeScriptで作成", "ablitydyno.raic.tech"];
 
     const randomIndex = Math.floor(Math.random() * activities.length);
     const newActivity = activities[randomIndex];
 
     client.user.setActivity(
-      `${newActivity} | v1.1-beta.2 | ${client.guilds.cache.size} guilds`
+      `${newActivity} | v1.1-beta.3 | ${client.guilds.cache.size} guilds`
     );
   }, 10_000);
 
@@ -42,18 +62,20 @@ client.once(Events.ClientReady, (baseClient) => {
   const commandsPath = path.join(__dirname, "commands");
   const commandFiles = fs
     .readdirSync(commandsPath)
-    .filter((file) => file.endsWith(".ts"));
+    .filter((file) => file.endsWith(".ts") && !file.endsWith("localEval.ts"));
 
-  for (const file of commandFiles) {
-    const filePath = path.join(commandsPath, file);
-    const command = require(filePath);
-    if ("data" in command && "execute" in command) {
-      client.commands.set(command.data.name, command);
-      console.log(`[COMMAND] Command registered! ${command.data.name}`);
-    } else {
-      console.log(`[COMMAND] ${filePath} is not valid command file.`);
-    }
-  }
+  client.getJsk().addCommands(commandFiles, commandsPath)
+
+  // for (const file of commandFiles) {
+  //   const filePath = path.join(commandsPath, file);
+  //   const command = require(filePath);
+  //   if ("data" in command && "execute" in command) {
+  //     client.commands.set(command.data.name, command);
+  //     console.log(`[COMMAND] Command registered! ${command.data.name}`);
+  //   } else {
+  //     console.log(`[COMMAND] ${filePath} is not valid command file.`);
+  //   }
+  // }
 
   //admin register
 
@@ -73,6 +95,8 @@ client.once(Events.ClientReady, (baseClient) => {
     }
   }
 });
+
+// client.on("messageCreate", (message) => jsk.onMessageCreated(message))
 
 client.on("interactionCreate", async (interaction) => {
   if (interaction.isButton() && interaction.customId.startsWith("verify-")) {
@@ -107,8 +131,12 @@ client.on("interactionCreate", async (interaction) => {
                 content: `<@&${config.targetRoleId}>を付与しました。(認証成功)`,
                 ephemeral: true,
               });
-            }).catch((error) => {
-              interaction.reply({content: "メンバーの認証に失敗しました: " + error, ephemeral: true})
+            })
+            .catch((error) => {
+              interaction.reply({
+                content: "メンバーの認証に失敗しました: " + error,
+                ephemeral: true,
+              });
             });
         } else {
           interaction.reply({
@@ -151,28 +179,28 @@ client.on("interactionCreate", async (interaction) => {
     interaction.commandName
   );
 
-  const command = (interaction.client as RaiClient).commands.get(
-    interaction.commandName
-  );
+  // const command = (interaction.client as RaiClient).commands.get(
+  //   interaction.commandName
+  // );
 
-  if (!command && !adminCommand) {
-    return;
-  }
+  // if (!command  && !adminCommand) {
+  //   return;
+  // }
 
-  if (command) {
-    try {
-      await command.execute(interaction);
-    } catch (error: any) {
-      if (!error.toString().includes("reading 'execute'")) {
-        console.error("Error in commands:", error);
-        await interaction.reply({
-          content:
-            "コマンドの実行中に、エラーが発生しました。もう一度お試しください。",
-          ephemeral: true,
-        });
-      }
-    }
-  }
+  // if (command) {
+  //   try {
+  //     await command.execute(interaction);
+  //   } catch (error: any) {
+  //     if (!error.toString().includes("reading 'execute'")) {
+  //       console.error("Error in commands:", error);
+  //       await interaction.reply({
+  //         content:
+  //           "コマンドの実行中に、エラーが発生しました。もう一度お試しください。",
+  //         ephemeral: true,
+  //       });
+  //     }
+  //   }
+  // }
 
   if (adminCommand) {
     try {

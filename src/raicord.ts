@@ -6,8 +6,9 @@ import {
   EmbedBuilder,
   User,
 } from "discord.js";
+import { djskClient } from "@uplc/discord.jsk";
 
-export interface RaiClient extends Client {
+export interface RaiClient extends djskClient {
   commands: Collection<string, any>;
   adminCommands: Collection<string, any>;
 }
@@ -51,9 +52,9 @@ export function botNoPermissionEmbed(client: Client, user: User) {
 }
 
 export function isPermissionIssue(error: any) {
-    if (error.toString().includes("Missing Permissions")) {
-        return true
-    } else {
-        return false
-    }
+  if (error.toString().includes("Missing Permissions")) {
+    return true;
+  } else {
+    return false;
+  }
 }
